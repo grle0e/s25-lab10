@@ -6,14 +6,13 @@ import QuizCore from '../core/QuizCore';
 let quiz = new QuizCore();
 
 const Quiz: React.FC = () => {
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null); // Хэрэглэгчийн сонгосон хариулт
-  const [submitted, setSubmitted] = useState(false); // Асуулт бүр дууссан эсэх
-  const [update, setUpdate] = useState(0); // UI шинэчлэхэд ашиглагддаг
-  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null); // Сонгосон хариулт зөв эсэх
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null); 
+  const [submitted, setSubmitted] = useState(false); 
+  const [update, setUpdate] = useState(0); 
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null); 
 
   const currentQuestion = quiz.getCurrentQuestion(); 
 
-  // UI шинэчлэх бүрт сонгосон хариултыг сэргээнэ
   useEffect(() => {
     const savedAnswer = quiz.getSelectedAnswer();
     const currentQ = quiz.getCurrentQuestion();
@@ -31,7 +30,7 @@ const Quiz: React.FC = () => {
     const currentQ = quiz.getCurrentQuestion();
     if (!currentQ) return;
 
-    quiz.answerQuestion(option); // Логикт оноог бүртгэнэ
+    quiz.answerQuestion(option); 
     setSelectedAnswer(option); // UI-д сонгосон хариулт хадгалах
     setIsAnswerCorrect(option === currentQ.correctAnswer); // Зөв эсэхийг хадгалах
   };
@@ -42,29 +41,29 @@ const Quiz: React.FC = () => {
         quiz.nextQuestion(); 
         setSelectedAnswer(null);
         setIsAnswerCorrect(null);
-        setUpdate(update + 1); // UI-г шинэчлэх
+        setUpdate(update + 1); // update UI
       } else {
-        setSubmitted(true); // Сүүлийн асуултад хүрсэн бол дууссан гэж тэмдэглэнэ
+        setSubmitted(true); // suuliin asuultad ocvol duussan
       }
     }
   };
 
-  // Өмнөх асуулт руу буцах
+  //omnoh asuult ru butsah
   const handleBackClick = (): void => {
     quiz.prevQuestion();
-    setUpdate(update + 1); // UI-г шинэчлэх
+    setUpdate(update + 1); 
   };
 
-  // Шинээр эхлүүлэх товч дарсны дараа бүх төлөвийг дахин тохируулна
+  // restart
   const handleRestart = (): void => {
     quiz = new QuizCore(); 
     setSelectedAnswer(null);
     setSubmitted(false);
     setIsAnswerCorrect(null);
-    setUpdate(update + 1); // UI-г дахин шинэчилнэ
+    setUpdate(update + 1); 
   };
 
-  // Хэрэв асуулт дууссан эсвэл олдохгүй бол
+  //asuult duussan esvel oldohgui bol
   if (submitted || !currentQuestion) {
     return (
       <div>
