@@ -1,46 +1,78 @@
-import React, { useState } from 'react'
-import './Quiz.css'
-import QuizQuestion from '../core/QuizQuestion';
+import React, { useState, useEffect } from 'react';
+import './Quiz.css';
+import QuizCore from '../core/QuizCore';
 
-interface QuizState {
-  questions: QuizQuestion[]
-  currentQuestionIndex: number
-  selectedAnswer: string | null
-  score: number
-}
+// undsen logic iig quizcore oos avna
+let quiz = new QuizCore();
 
 const Quiz: React.FC = () => {
-  const initialQuestions: QuizQuestion[] = [
-    {
-      question: 'What is the capital of France?',
-      options: ['London', 'Berlin', 'Paris', 'Madrid'],
-      correctAnswer: 'Paris',
-    },
-  ];
-  const [state, setState] = useState<QuizState>({
-    questions: initialQuestions,
-    currentQuestionIndex: 0,  // Initialize the current question index.
-    selectedAnswer: null,  // Initialize the selected answer.
-    score: 0,  // Initialize the score.
-  });
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null); // Хэрэглэгчийн сонгосон хариулт
+  const [submitted, setSubmitted] = useState(false); // Асуулт бүр дууссан эсэх
+  const [update, setUpdate] = useState(0); // UI шинэчлэхэд ашиглагддаг
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null); // Сонгосон хариулт зөв эсэх
+
+  const currentQuestion = quiz.getCurrentQuestion(); 
+
+  // UI шинэчлэх бүрт сонгосон хариултыг сэргээнэ
+  useEffect(() => {
+    const savedAnswer = quiz.getSelectedAnswer();
+    const currentQ = quiz.getCurrentQuestion();
+
+    setSelectedAnswer(savedAnswer);
+    if (savedAnswer && currentQ) {
+      setIsAnswerCorrect(savedAnswer === currentQ.correctAnswer);
+    } else {
+      setIsAnswerCorrect(null);
+    }
+  }, [update]);
 
   const handleOptionSelect = (option: string): void => {
-    setState((prevState) => ({ ...prevState, selectedAnswer: option }));
-  }
+    if (selectedAnswer) return; 
+    const currentQ = quiz.getCurrentQuestion();
+    if (!currentQ) return;
 
+    quiz.answerQuestion(option); // Логикт оноог бүртгэнэ
+    setSelectedAnswer(option); // UI-д сонгосон хариулт хадгалах
+    setIsAnswerCorrect(option === currentQ.correctAnswer); // Зөв эсэхийг хадгалах
+  };
 
-  const handleButtonClick = (): void => {
-    // Task3: Implement the logic for button click, such as moving to the next question.
-  } 
+  const handleNextClick = (): void => {
+    if (selectedAnswer) {
+      if (quiz.hasNextQuestion()) {
+        quiz.nextQuestion(); 
+        setSelectedAnswer(null);
+        setIsAnswerCorrect(null);
+        setUpdate(update + 1); // UI-г шинэчлэх
+      } else {
+        setSubmitted(true); // Сүүлийн асуултад хүрсэн бол дууссан гэж тэмдэглэнэ
+      }
+    }
+  };
 
-  const { questions, currentQuestionIndex, selectedAnswer, score } = state;
-  const currentQuestion = questions[currentQuestionIndex];
+  // Өмнөх асуулт руу буцах
+  const handleBackClick = (): void => {
+    quiz.prevQuestion();
+    setUpdate(update + 1); // UI-г шинэчлэх
+  };
 
-  if (!currentQuestion) {
+  // Шинээр эхлүүлэх товч дарсны дараа бүх төлөвийг дахин тохируулна
+  const handleRestart = (): void => {
+    quiz = new QuizCore(); 
+    setSelectedAnswer(null);
+    setSubmitted(false);
+    setIsAnswerCorrect(null);
+    setUpdate(update + 1); // UI-г дахин шинэчилнэ
+  };
+
+  // Хэрэв асуулт дууссан эсвэл олдохгүй бол
+  if (submitted || !currentQuestion) {
     return (
       <div>
         <h2>Quiz Completed</h2>
-        <p>Final Score: {score} out of {questions.length}</p>
+        <p>Final Score: {quiz.getScore()} out of {quiz.getTotalQuestions()}</p>
+        <button onClick={handleRestart} style={{ marginTop: '20px' }}>
+          Restart Quiz
+        </button>
       </div>
     );
   }
@@ -49,24 +81,44 @@ const Quiz: React.FC = () => {
     <div>
       <h2>Quiz Question:</h2>
       <p>{currentQuestion.question}</p>
-    
+
       <h3>Answer Options:</h3>
       <ul>
         {currentQuestion.options.map((option) => (
           <li
             key={option}
             onClick={() => handleOptionSelect(option)}
-            className={selectedAnswer === option ? 'selected' : ''}
+            className={`${selectedAnswer === option ? 'selected' : ''} ${selectedAnswer ? 'disabled' : ''}`}
+            style={{ cursor: selectedAnswer ? 'not-allowed' : 'pointer' }}
           >
             {option}
           </li>
         ))}
       </ul>
 
+      {/* Хэрэглэгчийн сонгосон хариулт зөв/буруу эсэхийг харуулна */}
+      {selectedAnswer && isAnswerCorrect !== null && (
+        <p style={{ color: isAnswerCorrect ? 'green' : 'red' }}>
+          {isAnswerCorrect ? 'Зөв хариулт!' : 'Буруу хариулт.'}
+        </p>
+      )}
+
       <h3>Selected Answer:</h3>
       <p>{selectedAnswer ?? 'No answer selected'}</p>
 
-      <button onClick={handleButtonClick}>Next Question</button>
+      {/* next bolon back buttons */}
+      <div style={{ marginTop: '20px' }}>
+        {quiz.getCurrentIndex() > 0 && (
+          <button onClick={handleBackClick}>Back</button>
+        )}
+        <button
+          onClick={handleNextClick}
+          disabled={!selectedAnswer}
+          style={{ marginLeft: '10px' }}
+        >
+          {quiz.hasNextQuestion() ? 'Next Question' : 'Submit'}
+        </button>
+      </div>
     </div>
   );
 };

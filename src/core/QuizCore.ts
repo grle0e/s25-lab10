@@ -2,83 +2,76 @@ import quizData from '../data/quizData';
 import QuizQuestion from './QuizQuestion';
 
 /**
- * The `QuizCore` class represents the core logic for managing a quiz, including
- * maintaining the quiz questions, tracking the user's progress, and calculating
- * their score.
- * 
- * It provides methods for navigating through the quiz, answering questions,
- * and retrieving information about the current state of the quiz.
+ * quiz-iin logic iig udirddag
  */
 class QuizCore {
-  private questions: QuizQuestion[];
-  private currentQuestionIndex: number;
-  private score: number;
+  private questions: QuizQuestion[];                
+  private currentQuestionIndex: number;             
+  private score: number;                           
+  private selectedAnswers: (string | null)[];       
 
-  /**
-   * Constructor
-   * @param filePath - The file path to a JSON file containing quiz data.
-   * @param callback - A callback function called when the quiz data is loaded.
-   */
   constructor() {
     this.questions = quizData;
     this.currentQuestionIndex = 0;
     this.score = 0;
+
+    this.selectedAnswers = new Array(quizData.length).fill(null);
   }
 
-  /**
-   * Get the current question.
-   * @returns The current question or null if no questions are available.
-   */
   public getCurrentQuestion(): QuizQuestion | null {
-    // Returns the current quiz question.
     if (this.currentQuestionIndex >= 0 && this.currentQuestionIndex < this.questions.length) {
       return this.questions[this.currentQuestionIndex];
     }
     return null;
   }
 
-  /**
-   * Move to the next question.
-   */
-  public nextQuestion(): void {      
-    this.currentQuestionIndex++;
+  //next
+  public nextQuestion(): void {
+    if (this.hasNextQuestion()) {
+      this.currentQuestionIndex++;
+    }
   }
 
-  /**
-   * Checks if there is a next question available in the quiz.
-   *
-   * @returns {boolean} True if there is a next question, false if the quiz has been completed.
-   */
+  //back
+  public prevQuestion(): void {
+    if (this.currentQuestionIndex > 0) {
+      this.currentQuestionIndex--;
+    }
+  }
+
   public hasNextQuestion(): boolean {
     return this.currentQuestionIndex < this.questions.length - 1;
   }
 
-  /**
-   * Record the user's answer and update the score.
-   * @param answer - The user's answer.
-   */
   public answerQuestion(answer: string): void {
-    // Records the user's answer and updates the score if the answer is correct.
     const currentQuestion = this.getCurrentQuestion();
-    if (currentQuestion && answer === currentQuestion.correctAnswer) {
-      this.score++;
+    if (currentQuestion) {
+      const alreadyAnswered = this.selectedAnswers[this.currentQuestionIndex];
+
+      if (!alreadyAnswered && answer === currentQuestion.correctAnswer) {
+        this.score++;
+      }
+      if (alreadyAnswered && alreadyAnswered === currentQuestion.correctAnswer && answer !== currentQuestion.correctAnswer) {
+        this.score--;
+      }
+      this.selectedAnswers[this.currentQuestionIndex] = answer;
     }
   }
 
-  /**
-   * Get the user's score.
-   * @returns The user's score.
-   */
+  public getSelectedAnswer(): string | null {
+    return this.selectedAnswers[this.currentQuestionIndex];
+  }
+
   public getScore(): number {
     return this.score;
   }
 
-  /**
-   * Get the total number of questions in the quiz.
-   * @returns The total number of questions.
-   */
   public getTotalQuestions(): number {
     return this.questions.length;
+  }
+
+  public getCurrentIndex(): number {
+    return this.currentQuestionIndex;
   }
 }
 
